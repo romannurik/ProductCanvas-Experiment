@@ -17,22 +17,25 @@ export function nodeFactory<TData extends Record<string, unknown>>(
   component: ReactComponent<NodeProps<any>>,
   {
     forceProps,
-    inspector,
+    Inspector,
   }: {
     forceProps?: Partial<NodeProps>;
-    inspector?: ReactComponent<NodeProps<any>>;
-  } = {}
+    Inspector?: ReactComponent<NodeProps<any>> & {
+      Label?: ReactComponent<NodeProps<any>>;
+      Icon?: ReactComponent<NodeProps<any>>;
+    };
+  } = {},
 ) {
   component = memo(component);
   return {
     type,
     component,
-    inspector,
+    Inspector,
     make: (node: Omit<Node<TData>, "type">) =>
       ({
         type,
         ...forceProps,
         ...node,
-      } satisfies Node),
+      }) satisfies Node,
   };
 }

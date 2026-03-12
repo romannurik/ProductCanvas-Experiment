@@ -11,6 +11,7 @@ import { useCanvasDataContext } from "./CanvasDataProvider";
 import { XIcon } from "lucide-react";
 import { nodeFactories } from "./factories";
 import { useMemo } from "react";
+import { NodeProps } from "@xyflow/react";
 
 export function NodeInspectorPanel({
   className,
@@ -21,18 +22,38 @@ export function NodeInspectorPanel({
 }) {
   const { nodes, closeInspector } = useCanvasDataContext();
 
-  const { inspector: Inspector, node } = useMemo(() => {
+  const { Inspector, node } = useMemo(() => {
     const node = nodeId ? nodes.find((n) => n.id === nodeId) : undefined;
-    if (!node) return { inspector: undefined, node: undefined };
-    const inspector = nodeFactories[node.type || ""]?.inspector;
-    return { node, inspector };
+    if (!node) return { Inspector: undefined, node: undefined };
+    const Inspector = nodeFactories[node.type || ""]?.Inspector;
+    return { node, Inspector };
   }, [nodeId, nodes]);
+
+  const nodeProps: NodeProps<any> | undefined = node
+    ? {
+        type: node.type || "",
+        selectable: node.selectable || false,
+        selected: node.selected || false,
+        dragging: node.dragging || false,
+        draggable: node.draggable || false,
+        deletable: node.deletable || false,
+        zIndex: node.zIndex || 0,
+        isConnectable: false,
+        positionAbsoluteX: 0,
+        positionAbsoluteY: 0,
+        ...(node as any),
+      }
+    : undefined;
 
   return (
     <div className={cn(styles.panel, className)}>
       <header className={styles.header}>
         <Text className={styles.label} size="3" color="gray">
-          Inspector
+          {!!nodeProps && !!Inspector?.Label ? (
+            <Inspector.Label {...nodeProps} />
+          ) : (
+            <>Inspector</>
+          )}
         </Text>
         <IconButton
           onClick={() => closeInspector()}
@@ -46,20 +67,8 @@ export function NodeInspectorPanel({
         </IconButton>
       </header>
       <div className={styles.body}>
-        {!!node && !!Inspector ? (
-          <Inspector
-            type={node.type || ""}
-            selectable={node.selectable || false}
-            selected={node.selected || false}
-            dragging={node.dragging || false}
-            draggable={node.draggable || false}
-            deletable={node.deletable || false}
-            zIndex={node.zIndex || 0}
-            isConnectable={false}
-            positionAbsoluteX={0}
-            positionAbsoluteY={0}
-            {...node as any}
-          />
+        {!!node && !!nodeProps && !!Inspector ? (
+          <Inspector {...nodeProps} />
         ) : (
           <>No inspector for this node</>
         )}

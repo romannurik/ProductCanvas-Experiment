@@ -46,6 +46,7 @@ import {
   FlagIcon,
   FullscreenIcon,
   MessageCircleIcon,
+  MousePointerClickIcon,
   PlusIcon,
   UserIcon,
 } from "lucide-react";
@@ -56,7 +57,6 @@ import { useGeminiApi } from "./ai";
 import { NodeInspectorPanel } from "./canvas/NodeInspectorPanel";
 import { MiniAppNodeData, miniAppNodes } from "./canvas/nodes/MiniAppNode";
 import { Splitter } from "./components/splitter/Splitter";
-import JulesIcon from "./icons/JulesIcon";
 import { generateMiniApp } from "./miniapp-generator/miniapp-generator";
 import { screenshotMiniApp } from "./miniapp/screenshotter";
 
@@ -561,8 +561,8 @@ ${prompt}
                           Design ideas
                         </DropdownMenu.Item>
                         <DropdownMenu.Item onClick={() => autoAddMiniApp()}>
-                          <JulesIcon size={16} />
-                          Jules prototype
+                          <MousePointerClickIcon size={16} />
+                          Prototype
                         </DropdownMenu.Item>
                       </DropdownMenu.Content>
                     </DropdownMenu.Root>

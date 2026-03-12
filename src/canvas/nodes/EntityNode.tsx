@@ -14,7 +14,7 @@ import styles from "./EntityNode.module.scss";
 import { nodeFactory } from "./node-factory";
 
 export const entityNodes = nodeFactory<EntityNodeData>("entity", EntityNode, {
-  inspector: EntityInspector,
+  Inspector: EntityInspector,
 });
 
 export type EntityType = "user-goal" | "tech-stack" | "persona";

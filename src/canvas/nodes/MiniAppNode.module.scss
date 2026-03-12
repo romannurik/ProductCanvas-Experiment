@@ -58,4 +58,10 @@
   color: rgba(255 255 255 / 0.6);
   padding: 0 12px 8px 12px;
   max-width: 240px;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  max-lines: 2;
+  line-clamp: 2;
+  white-space: nowrap;
+  overflow: hidden;
 }

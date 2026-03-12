@@ -52,3 +52,5 @@ export function EntityInspector({ id, data }: NodeProps<Node<EntityNodeData>>) {
     </div>
   );
 }
+
+EntityInspector.Label = () => "Spec editor";

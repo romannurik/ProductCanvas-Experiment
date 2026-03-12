@@ -4,21 +4,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import JulesIcon from "@/icons/JulesIcon";
-import { Button, Spinner, Text } from "@radix-ui/themes";
+import { Button, Spinner, Text, Tooltip } from "@radix-ui/themes";
 import { NodeProps } from "@xyflow/react";
-import { PlayIcon } from "lucide-react";
+import { MousePointerClickIcon, PlayIcon } from "lucide-react";
 import { useCanvasDataContext } from "../CanvasDataProvider";
 import { BaseNode } from "./BaseNode";
 import { MiniAppInspector } from "./MiniAppInspector";
 import styles from "./MiniAppNode.module.scss";
 import { nodeFactory } from "./node-factory";
 
-export const miniAppNodes = nodeFactory<MiniAppNodeData>(
-  "miniApp",
-  MiniAppNode,
-  { inspector: MiniAppInspector }
-);
+export const miniAppNodes = nodeFactory<MiniAppNodeData>("miniApp", MiniAppNode, {
+  Inspector: MiniAppInspector,
+});
 
 export type EntityType = "user-goal" | "tech-stack";
 
@@ -40,8 +37,8 @@ function MiniAppNode(props: NodeProps) {
       {...props}
     >
       <div className={styles.header}>
-        <JulesIcon size={16} />
-        <span>Jules Prototype</span>
+        <MousePointerClickIcon size={16} />
+        <span>Prototype</span>
       </div>
       <div className={styles.content}>
         {state === "generating" && (
@@ -73,7 +70,9 @@ function MiniAppNode(props: NodeProps) {
           </>
         )}
       </div>
-      <div className={styles.prompt}>{prompt}</div>
+      <Tooltip content={prompt} delayDuration={500}>
+        <div className={styles.prompt}>{prompt}</div>
+      </Tooltip>
     </BaseNode>
   );
 }

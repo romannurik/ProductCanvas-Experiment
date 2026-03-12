@@ -5,9 +5,18 @@
  */
 
 import { AuthAvatar } from "@/auth/AuthAvatar";
+import { useAuthContext } from "@/auth/AuthProvider";
 import { PeerFacePile } from "@/collab/PeerFacePile";
 import { PeerList, usePresenceContext } from "@/collab/PresenceProvider";
+import { Command } from "@/commands/CommandProvider";
 import { useDocumentContext } from "@/document/DocumentProvider";
+import {
+  APP_ROOT_PATH,
+  AppUserInfo,
+  UNTITLED_DOC_TITLE,
+  USERINFO_ROOT_PATH,
+} from "@/document/model-and-db";
+import { db } from "@/firebase";
 import { useMeetingContext } from "@/meetings/MeetingProvider";
 import {
   Button,
@@ -21,14 +30,15 @@ import {
   Tooltip,
 } from "@radix-ui/themes";
 import cn from "classnames";
+import { onValue, ref } from "firebase/database";
 import {
   ChevronDownIcon,
+  CopyIcon,
   LinkIcon,
   PhoneIcon,
   PlusIcon,
   RefreshCwOffIcon,
   Share2Icon,
-  ShuffleIcon,
   TrashIcon,
   VideoIcon,
 } from "lucide-react";
@@ -36,19 +46,9 @@ import { useEffect, useMemo, useState } from "react";
 import styles from "./Header.module.scss";
 import { InlineTextEdit } from "./InlineTextEdit";
 import { Logo } from "./Logo";
-import { useToast } from "./Toast";
-import { Command } from "@/commands/CommandProvider";
-import {
-  APP_ROOT_PATH,
-  AppUserInfo,
-  UNTITLED_DOC_TITLE,
-  USERINFO_ROOT_PATH,
-} from "@/document/model-and-db";
-import { useAuthContext } from "@/auth/AuthProvider";
-import { onValue, ref } from "firebase/database";
-import { db } from "@/firebase";
-import { SettingsButton } from "./SettingsButton";
 import { SendFeedbackButton } from "./SendFeedbackButton";
+import { SettingsButton } from "./SettingsButton";
+import { useToast } from "./Toast";
 
 export function Header() {
   const { user } = useAuthContext();
@@ -265,7 +265,7 @@ export function Header() {
             radius="full"
             onClick={() => fork()}
           >
-            <ShuffleIcon size={20} />
+            <CopyIcon size={20} />
           </IconButton>
         </Tooltip>
         <Separator orientation="vertical" />
