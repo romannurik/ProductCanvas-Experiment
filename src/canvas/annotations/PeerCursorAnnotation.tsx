@@ -6,10 +6,10 @@
 
 import { NodeProps, useStore } from "@xyflow/react";
 import cn from "classnames";
+import { useMemo } from "react";
 import tinycolor from "tinycolor2";
 import { annotationFactory } from "./annotation-factory";
 import styles from "./PeerCursorAnnotation.module.scss";
-import { useMemo } from "react";
 
 export const peerCursorAnnotations =
   annotationFactory<PeerCursorAnnotationData>(
@@ -25,13 +25,14 @@ export type PeerCursorAnnotation = ReturnType<
 type PeerCursorAnnotationData = {
   name: string;
   color: string;
+  floatingAngle?: number;
   aiGlow?: boolean;
   hidden?: boolean; // for animating gemini visible/invisible
 };
 
 function PeerCursorAnnotation(props: NodeProps) {
   const zoom = useStore((s) => s.transform[2]);
-  const { color, name, hidden, aiGlow } =
+  const { color, name, hidden, aiGlow, floatingAngle } =
     props.data as PeerCursorAnnotationData;
   const dark = useMemo(() => tinycolor(color).isDark(), [color]);
 
@@ -41,10 +42,11 @@ function PeerCursorAnnotation(props: NodeProps) {
         [styles.isHidden]: hidden,
         [styles.isDark]: dark,
         [styles.isAiGlow]: aiGlow,
+        [styles.isFloating]: floatingAngle !== undefined,
       })}
       style={{
         ["--color" as any]: color,
-        transform: `scale(${1 / zoom}) translate(12px, 12px)`,
+        transform: `scale(${1 / zoom}) rotate(${floatingAngle ? floatingAngle + 135 : 0}deg) translate(12px, 12px)`,
       }}
     >
       <svg
@@ -58,9 +60,15 @@ function PeerCursorAnnotation(props: NodeProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" />
+        {floatingAngle === undefined ? (
+          <path d="M4.037 4.688a.495.495 0 0 1 .651-.651l16 6.5a.5.5 0 0 1-.063.947l-6.124 1.58a2 2 0 0 0-1.438 1.435l-1.579 6.126a.5.5 0 0 1-.947.063z" />
+        ) : (
+          <path d="M4.037 4.688a.495.495 0 01.65-.651l13.207 5.365a2 2 0 01.662 3.267l-5.887 5.887a2 2 0 01-3.267-.662L4.037 4.688z" />
+        )}
       </svg>
-      {name && <div className={styles.label}>{name}</div>}
+      {name && floatingAngle === undefined && (
+        <div className={styles.label}>{name}</div>
+      )}
     </div>
   );
 }

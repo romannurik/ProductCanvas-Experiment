@@ -79,6 +79,12 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
   const [reactFlow, setReactFlow] = useState<ReactFlowInstance>();
   const { nodes, edges, setNodes, setEdges, commentMode, aiCursor } =
     useCanvasDataContext();
+  const [paddedViewportCoords, setPaddedViewportCoords] = useState<{
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+  } | null>(null);
   const { peers, setAppData } = usePresenceContext();
   const [smoothedAiCursor, setSmoothedAiCursor] = useState<
     XYPosition & { hidden: boolean }
@@ -117,23 +123,51 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
   }, [aiCursor]);
 
   const annotations = useMemo<PeerCursorAnnotation[]>(() => {
-    let annotations = peers.flatMap((p) =>
-      p.appData?.canvasCursorPos
-        ? [
-            peerCursorAnnotations.make({
-              id: `annotation:peerCursor:${p.uid}`,
-              position: {
-                x: p.appData?.canvasCursorPos?.x || 0,
-                y: p.appData?.canvasCursorPos?.y || 0,
-              },
-              data: { name: p.displayName, color: p.color },
-            }),
-          ]
-        : [],
-    );
+    let makePeerCursor: (typeof peerCursorAnnotations)["make"] = (node) => {
+      let { position } = node;
+      if (!position || !paddedViewportCoords)
+        return peerCursorAnnotations.make(node);
+      let { left, top, right, bottom } = paddedViewportCoords;
+      if (
+        position.x < left ||
+        position.x > right ||
+        position.y < top ||
+        position.y > bottom
+      ) {
+        let constrainedPos = {
+          x: Math.max(left, Math.min(right, position.x)),
+          y: Math.max(top, Math.min(bottom, position.y)),
+        };
+        node = {
+          ...node,
+          position: constrainedPos,
+          data: {
+            ...node.data,
+            floatingAngle:
+              Math.atan2(
+                position.y - (bottom + top) / 2,
+                position.x - (right + left) / 2,
+              ) *
+              (180 / Math.PI),
+          },
+        };
+      }
+      return peerCursorAnnotations.make(node);
+    };
+
+    let annotations = peers
+      .filter((p) => p.appData?.canvasCursorPos)
+      .map((p) =>
+        makePeerCursor({
+          id: `annotation:peerCursor:${p.uid}`,
+          position: p.appData!.canvasCursorPos!,
+          data: { name: p.displayName, color: p.color },
+        }),
+      );
+
     if (smoothedAiCursor) {
       annotations.push(
-        peerCursorAnnotations.make({
+        makePeerCursor({
           id: `annotation:aiCursor`,
           position: smoothedAiCursor,
           data: {
@@ -146,7 +180,34 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
       );
     }
     return annotations;
-  }, [peers, smoothedAiCursor]);
+  }, [peers, smoothedAiCursor, paddedViewportCoords]);
+
+  function updateViewportCoords() {
+    if (!reactFlowNodeRef.current || !reactFlow) return;
+    const PADDING_PX = 8;
+    let bounds = reactFlowNodeRef.current.getBoundingClientRect();
+    let tl = reactFlow.screenToFlowPosition({
+      x: bounds.left + PADDING_PX,
+      y: bounds.top + PADDING_PX,
+    });
+    let br = reactFlow.screenToFlowPosition({
+      x: bounds.right - PADDING_PX,
+      y: bounds.bottom - PADDING_PX,
+    });
+    setPaddedViewportCoords({
+      left: tl?.x || 0,
+      top: tl?.y || 0,
+      right: br?.x || 0,
+      bottom: br?.y || 0,
+    });
+  }
+
+  useEffect(() => {
+    updateViewportCoords();
+    let abort = new AbortController();
+    window.addEventListener("resize", updateViewportCoords, abort);
+    return () => abort.abort();
+  }, [reactFlow]);
 
   useImperativeHandle(
     ref,
@@ -284,6 +345,7 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
         onNodeClick={(ev, node) => {
           node.type !== commentNodes.type && maybeCreateComment(ev);
         }}
+        onViewportChange={() => updateViewportCoords()}
         onPaneClick={(ev) => maybeCreateComment(ev)}
         onPaneMouseLeave={() => setAppData({ canvasCursorPos: null })}
         defaultEdgeOptions={{ type: "floating" }}
