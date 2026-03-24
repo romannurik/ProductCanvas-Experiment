@@ -85,7 +85,8 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
     right: number;
     bottom: number;
   } | null>(null);
-  const { peers, setAppData } = usePresenceContext();
+  const { peers, setAppData, followingPeer, setFollowingUid } =
+    usePresenceContext();
   const [smoothedAiCursor, setSmoothedAiCursor] = useState<
     XYPosition & { hidden: boolean }
   >({ x: 0, y: 0, hidden: true });
@@ -182,8 +183,10 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
     return annotations;
   }, [peers, smoothedAiCursor, paddedViewportCoords]);
 
-  function updateViewportCoords() {
+  function handleViewportChange() {
     if (!reactFlowNodeRef.current || !reactFlow) return;
+
+    // update viewport extrema
     const PADDING_PX = 8;
     let bounds = reactFlowNodeRef.current.getBoundingClientRect();
     let tl = reactFlow.screenToFlowPosition({
@@ -200,14 +203,33 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
       right: br?.x || 0,
       bottom: br?.y || 0,
     });
+
+    // store center-based viewport in presence / app data
+    let canvasViewport = { ...reactFlow.getViewport() };
+    canvasViewport.x -= bounds.width / 2;
+    canvasViewport.y -= bounds.height / 2;
+    setAppData((d) => ({
+      ...d,
+      canvasViewport,
+    }));
   }
 
   useEffect(() => {
-    updateViewportCoords();
+    handleViewportChange();
     let abort = new AbortController();
-    window.addEventListener("resize", updateViewportCoords, abort);
+    window.addEventListener("resize", handleViewportChange, abort);
     return () => abort.abort();
   }, [reactFlow]);
+
+  useEffect(() => {
+    if (!followingPeer?.appData?.canvasViewport || !reactFlowNodeRef.current)
+      return;
+    let viewport = { ...followingPeer.appData.canvasViewport };
+    let bounds = reactFlowNodeRef.current.getBoundingClientRect();
+    viewport.x += bounds.width / 2;
+    viewport.y += bounds.height / 2;
+    reactFlow?.setViewport(viewport, { duration: 0 });
+  }, [followingPeer?.appData?.canvasViewport]);
 
   useImperativeHandle(
     ref,
@@ -315,6 +337,14 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
         [styles.isCommentMode]: commentMode,
       })}
     >
+      {followingPeer && (
+        <div
+          className={styles.followingOverlay}
+          style={{ ["--following-color" as any]: followingPeer.color }}
+        >
+          <span>Following {followingPeer?.displayName}</span>
+        </div>
+      )}
       <ReactFlow
         ref={reactFlowNodeRef}
         onInit={(reactFlow) =>
@@ -340,14 +370,20 @@ export const Canvas = forwardRef<CanvasRef, Props>(({ className }, ref) => {
             x: ev.clientX,
             y: ev.clientY,
           }) || { x: 0, y: 0 };
-          setAppData({ canvasCursorPos: { x, y } });
+          setAppData((d) => ({
+            ...d,
+            canvasCursorPos: { x, y },
+          }));
         }}
         onNodeClick={(ev, node) => {
           node.type !== commentNodes.type && maybeCreateComment(ev);
         }}
-        onViewportChange={() => updateViewportCoords()}
+        onViewportChange={handleViewportChange}
         onPaneClick={(ev) => maybeCreateComment(ev)}
-        onPaneMouseLeave={() => setAppData({ canvasCursorPos: null })}
+        onMove={(ev) => ev !== null && setFollowingUid(undefined)}
+        onPaneMouseLeave={() =>
+          setAppData((d) => ({ ...d, canvasCursorPos: undefined }))
+        }
         defaultEdgeOptions={{ type: "floating" }}
         colorMode="dark"
         panOnScroll={true}

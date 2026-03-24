@@ -7,6 +7,7 @@
 import { useAuthContext } from "@/auth/AuthProvider";
 import { PresenceAppData } from "@/document/model-and-db";
 import { db } from "@/firebase";
+import { stripUndefined } from "@/util/primitives-util";
 import {
   child,
   DatabaseReference,
@@ -50,17 +51,17 @@ export type PresenceContext = {
   connected: boolean;
   appData: PresenceAppData | undefined;
   setAppData: React.Dispatch<SetStateAction<PresenceAppData | undefined>>;
+  followingPeer: Peer | undefined;
+  setFollowingUid: React.Dispatch<SetStateAction<string | undefined>>;
 };
 
 type RawPresenceData = {
   [uid: string]: RawPresenceDatum;
 };
 
-export type PeerList = Array<
-  RawPresenceDatum & {
-    color: string;
-  }
->;
+export type Peer = RawPresenceDatum & { color: string };
+
+export type PeerList = Array<Peer>;
 
 const PresenceContext = createContext<PresenceContext>({} as PresenceContext);
 
@@ -83,6 +84,7 @@ export function PresenceProvider({
   const { user } = useAuthContext();
   const [connected, setConnected] = useState(true);
   const [rawPresenceData, setRawPresenceData] = useState<RawPresenceData>({});
+  const [followingUid, setFollowingUid] = useState<string>();
   const clientRef = child(presenceRef, String(clientId));
   const clearPresenceTimeoutRef = useRef<any>();
 
@@ -107,7 +109,7 @@ export function PresenceProvider({
       if (appData !== undefined) {
         (obj as any).appData = appData;
       }
-      set(clientRef, obj);
+      set(clientRef, stripUndefined(obj));
     });
 
     const onDisconnectRef = onDisconnect(clientRef);
@@ -117,7 +119,7 @@ export function PresenceProvider({
       reconnectUnsubscribe();
       clearPresenceTimeoutRef.current = setTimeout(
         () => onDisconnectRef.cancel().then(() => set(clientRef, null)),
-        100
+        100,
       );
     };
   }, [user, appData, String(clientRef)]);
@@ -153,9 +155,23 @@ export function PresenceProvider({
 
   const selfClientIds = rawPresenceData?.[user?.uid || ""]?.clientIds || [];
 
+  const followingPeer = useMemo(() => {
+    if (!followingUid) return undefined;
+    return peers.find((p) => p.uid === followingUid);
+  }, [followingUid, peers]);
+
   return (
     <PresenceContext.Provider
-      value={{ peers, clientId, selfClientIds, connected, appData, setAppData }}
+      value={{
+        peers,
+        clientId,
+        selfClientIds,
+        connected,
+        appData,
+        setAppData,
+        followingPeer,
+        setFollowingUid,
+      }}
     >
       {children}
     </PresenceContext.Provider>

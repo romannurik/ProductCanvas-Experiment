@@ -20,8 +20,30 @@
       z-index: #{10 - $i};
     }
   }
+
+  &.isFollowing {
+    z-index: 99;
+    animation: pulsateShadow 1s ease-in-out infinite alternate;
+
+    @keyframes pulsateShadow {
+      0% {
+        box-shadow:
+          0 0 0 2px var(--bg-color),
+          0 0 0 4px var(--user-color);
+      }
+      100% {
+        box-shadow:
+          0 0 0 6px var(--bg-color),
+          0 0 0 8px var(--user-color);
+      }
+    }
+  }
+
+  &.isClickable {
+    cursor: pointer;
+  }
 }
 
-.peer+.peer {
+.peer + .peer {
   margin-left: -4px;
 }

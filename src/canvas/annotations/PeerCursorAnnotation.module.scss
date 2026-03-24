@@ -14,6 +14,8 @@
   pointer-events: none;
   transition: opacity 0.2s ease;
   position: relative;
+  width: 24px;
+  height: 24px;
 
   &.isHidden {
     opacity: 0;

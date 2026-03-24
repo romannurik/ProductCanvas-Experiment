@@ -176,6 +176,7 @@ export function Header() {
             className={styles.facePile}
             peers={peersInMeeting}
             connected={connected}
+            clickToFollow
           />
         </div>
       )}
@@ -201,6 +202,7 @@ export function Header() {
               className={styles.facePile}
               peers={peersInMeeting}
               connected={connected}
+              clickToFollow
             />
           )}
         </div>
@@ -222,6 +224,7 @@ export function Header() {
           peers={peersNotInMeeting}
           className={styles.facePile}
           connected={connected}
+          clickToFollow
         />
       )}
       {(meeting.status !== "not-started" || !!peers.length) && <hr />}

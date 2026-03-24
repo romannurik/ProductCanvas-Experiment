@@ -14,7 +14,7 @@
   position: relative;
   transform: translate(-50%, -50%);
   animation: enter 0.5s cubic-bezier(.4, .4, 0, 1);
-  z-index: 99;
+  z-index: 990;
 }
 
 @keyframes enter {

@@ -46,7 +46,11 @@ function PeerCursorAnnotation(props: NodeProps) {
       })}
       style={{
         ["--color" as any]: color,
-        transform: `scale(${1 / zoom}) rotate(${floatingAngle ? floatingAngle + 135 : 0}deg) translate(12px, 12px)`,
+        transform: [
+          `rotate(${floatingAngle ? floatingAngle + 135 : 0}deg)`,
+          `scale(${1 / zoom})`,
+          `translate(8px, 8px)`,
+        ].join(" "),
       }}
     >
       <svg
